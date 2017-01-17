@@ -77,7 +77,7 @@ backandAsync.prototype.parallel = function (array, limit, action, actionSuccess,
 };
 
 // array: A collection of object to be post
-// limit: The maximum number of async operations at a time
+// limit: The maximum number of async actions at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
 backandAsync.prototype.parallelPost = function (array, limit, objectName, finalCallback) {
