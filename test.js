@@ -10,12 +10,12 @@ var expect = chai.expect;
 var assert = chai.assert;
 
 // backand SDK
-var options =  require("./options.json");
+var options =  require("./options-prod.json");
 var BackandAsyncSdk = require("./backand-async");
 var backandAsync = new BackandAsyncSdk(options);
 
 // test parameters
-var objectName = 'parent' // the object to CRUD
+var objectName = 'parent'; // the object to CRUD
 var length = 1000;    // how many objects
 var limit = 10;      // how many parallel requests
 var data;            // the data after get all that will be later updated and deleted.
@@ -131,7 +131,7 @@ describe("backand async", function () {
         });
     });
 
-    it.only('should parallel post ' + length + ' objects with bulk, limited to ' + limit + ' requests at a time.', function (done) {
+    it('should parallel post ' + length + ' objects with bulk, limited to ' + limit + ' requests at a time.', function (done) {
         var sample = getSampleData(length);
         console.log('parallel post started');
         var started = new Date();
@@ -170,7 +170,7 @@ describe("backand async", function () {
         });
     });
 
-    it.only('should parallel put all objects with bulk, limited to ' + limit + ' requests at a time.', function (done) {
+    it('should parallel put all objects with bulk, limited to ' + limit + ' requests at a time.', function (done) {
         console.log('parallel put started');
         var sample = getChangedSampleData(data);
 

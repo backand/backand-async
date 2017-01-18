@@ -17,7 +17,7 @@ var backandAsync = new BackandAsyncSdk(options);
 }
 ```
 
-## parallel(array, limit, action, actionSuccess, actionError, finalCallback)
+## each(array, limit, action, actionSuccess, actionError, finalCallback)
 Runs an action with a promice on an array of objects. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |
@@ -25,17 +25,19 @@ Runs an action with a promice on an array of objects. The actions run in paralle
 | array          | array    | array of object as the CRUD action input                     |
 | limit          | int      | The maximum number of async actions at a time. max 10, min 1 |
 | action         | function | action(obj), obj is an object from the array                 |
-| actionSuccess  | function | actionSuccess(response, obj, successes)                      |
+| actionSuccess  | function | actionSuccess(response, obj, successes, errors)              |
 |                |          | response: backand CRUD response                              |
 |                |          | obj: an object from the array                                |
 |                |          | successes: an array of all succeful actions                  |
-| actionError    | function | actionError(e), e is the error in the action                 |
+| actionError    | function | actionError(e, obj), e is the error in the action            |
+|                |          | e: the error in the action                                   |
+|                |          | obj: the input object from the array                         |
 | finalCallback  | function | finalCallback(err, results)                                  |
 |                |          | err: an error in an action that stop the entire run like 401 |
 |                |          | the err is null if no error occured                          |
 |                |          | results: {successes, errors}                                 |
 
-## parallelPost(array, limit, objectName, finalCallback)
+## eachPost(array, limit, objectName, finalCallback)
 Runs a backand post on an array of objects. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |
@@ -43,12 +45,19 @@ Runs a backand post on an array of objects. The actions run in parallel up to th
 | array          | array    | A collection of object to create                             |
 | limit          | int      | The maximum number of async actions at a time. max 10, min 1 |
 | objectName     | string   | The name of the object to post                               |
+| actionSuccess  | function | actionSuccess(response, obj, successes, errors)              |
+|                |          | response: backand CRUD response                              |
+|                |          | obj: an object from the array                                |
+|                |          | successes: an array of all succeful actions                  |
+| actionError    | function | actionError(e, obj), e is the error in the action            |
+|                |          | e: the error in the action                                   |
+|                |          | obj: the input object from the array                         |
 | finalCallback  | function | finalCallback(err, results)                                  |
 |                |          | err: an error in an action that stop the entire run like 401 |
 |                |          | the err is null if no error occured                          |
 |                |          | results: {successes, errors}                                 |
 
-## parallelPut(array, limit, objectName, finalCallback)
+## eachPut(array, limit, objectName, finalCallback)
 Runs a backand put on an array of objects. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |
@@ -56,12 +65,19 @@ Runs a backand put on an array of objects. The actions run in parallel up to the
 | array          | array    | A collection of object to update                             |
 | limit          | int      | The maximum number of async actions at a time. max 10, min 1 |
 | objectName     | string   | The name of the object to put                                |
+| actionSuccess  | function | actionSuccess(response, obj, successes, errors)              |
+|                |          | response: backand CRUD response                              |
+|                |          | obj: an object from the array                                |
+|                |          | successes: an array of all succeful actions                  |
+| actionError    | function | actionError(e, obj), e is the error in the action            |
+|                |          | e: the error in the action                                   |
+|                |          | obj: the input object from the array                         |
 | finalCallback  | function | finalCallback(err, results)                                  |
 |                |          | err: an error in an action that stop the entire run like 401 |
 |                |          | the err is null if no error occured                          |
 |                |          | results: {successes, errors}                                 |
 
-## parallelDelete(array, limit, objectName, finalCallback)
+## eachDelete(array, limit, objectName, finalCallback)
 Runs a backand delete on an array of objects. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |
@@ -69,12 +85,19 @@ Runs a backand delete on an array of objects. The actions run in parallel up to 
 | array          | array    | A collection of object to delete                             |
 | limit          | int      | The maximum number of async actions at a time. max 10, min 1 |
 | objectName     | string   | The name of the object to delete from                        |
+| actionSuccess  | function | actionSuccess(response, obj, successes, errors)              |
+|                |          | response: backand CRUD response                              |
+|                |          | obj: an object from the array                                |
+|                |          | successes: an array of all succeful actions                  |
+| actionError    | function | actionError(e, obj), e is the error in the action            |
+|                |          | e: the error in the action                                   |
+|                |          | obj: the input object from the array                         |
 | finalCallback  | function | finalCallback(err, results)                                  |
 |                |          | err: an error in an action that stop the entire run like 401 |
 |                |          | the err is null if no error occured                          |
 |                |          | results: {successes, errors}                                 |
 
-## parallelGet(total, limit, objectName, finalCallback)
+## get(total, limit, objectName, finalCallback)
 Get up to a total rows from an object. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |
@@ -87,7 +110,7 @@ Get up to a total rows from an object. The actions run in parallel up to the lim
 |                |          | the err is null if no error occured                          |
 |                |          | results: {successes, errors}                                 |
 
-## parallelGetAll(limit, objectName, finalCallback)
+## getAll(limit, objectName, finalCallback)
 Get the entire object. The actions run in parallel up to the limit specified.
 ### Arguments:
 | Name           | Type     | Description                                                  |

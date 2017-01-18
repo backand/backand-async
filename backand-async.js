@@ -41,13 +41,15 @@ var parallel = function (array, limit, action, actionSuccess, actionError, final
 
         action(obj).then(function (response) {
             // parse the response and push it to the successes array
-            successes = actionSuccess(response, obj, successes);
+            var actionSuccessResult = actionSuccess(response, obj, successes, errors);
+            successes = actionSuccessResult.successes;
+            errors = actionSuccessResult.errors;
             //console.log('Finish processing object ' + index);
             callback();
         }).catch(function(e) {
             console.error(e, index, obj);
             // determine if the entire parallel process should stop
-            var stop = actionError(e);
+            var stop = actionError(e, obj);
             errors.push(e);
             if (stop) callback(e);
             else  callback();
@@ -72,7 +74,7 @@ var parallel = function (array, limit, action, actionSuccess, actionError, final
 // actionSuccess: Triggered at the end of a successful action, parse the response that returned in the successes array
 // actionError: Triggered at the end of a failed action, returns a boolean flag that determine if the entire parallel process should stop.
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallel = function (array, limit, action, actionSuccess, actionError, finalCallback) {
+backandAsync.prototype.each = function (array, limit, action, actionSuccess, actionError, finalCallback) {
     parallel(array, limit, action, actionSuccess, actionError, finalCallback);
 };
 
@@ -80,15 +82,17 @@ backandAsync.prototype.parallel = function (array, limit, action, actionSuccess,
 // limit: The maximum number of async actions at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelPost = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.eachPost = function (array, limit, objectName, actionSuccess, actionError, finalCallback) {
     var url = '/1/objects/' + objectName;
 
     parallel(array, limit, function (obj) {
         return self.backand.post(url, obj, false);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         successes.push(response.__metadata.id);
-        return successes;
-    }, function (err) {
+        if (actionSuccess) actionSuccess(response, obj);
+        return { successes:successes, errors:errors };
+    }, function (err, obj) {
+        if (actionError) actionError(err, obj);
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
         ||
@@ -100,15 +104,17 @@ backandAsync.prototype.parallelPost = function (array, limit, objectName, finalC
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelPut = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.eachPut = function (array, limit, objectName, actionSuccess, actionError, finalCallback) {
     var url = '/1/objects/' + objectName + '/';
 
     parallel(array, limit, function (obj) {
         return self.backand.put(url + obj.__metadata.id, obj);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         successes.push(obj.__metadata.id);
-        return successes;
-    }, function (err) {
+        if (actionSuccess) actionSuccess(response, obj);
+        return { successes:successes, errors:errors };
+    }, function (err, obj) {
+        if (actionError) actionError(err, obj);
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
         ||
@@ -120,14 +126,15 @@ backandAsync.prototype.parallelPut = function (array, limit, objectName, finalCa
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelDelete = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.eachDelete = function (array, limit, objectName, actionSuccess, actionError, finalCallback) {
     var url = '/1/objects/' + objectName + '/';
 
     parallel(array, limit, function (obj) {
         return self.backand.delete(url + obj.__metadata.id, obj);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         successes.push(obj.__metadata.id);
-        return successes;
+        if (actionSuccess) actionSuccess(response, obj);
+        return { successes:successes, errors:errors };
     }, function (err) {
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
@@ -176,10 +183,10 @@ var parallelGet = function (total, limit, objectName, finalCallback) {
 
         parallel(array, limit, function (pageNumber) {
             return self.backand.get(url + '?pageSize=' + pageSize + '&pageNumber=' + pageNumber);
-        }, function (response, obj, successes) {
+        }, function (response, obj, successes, errors) {
             successes = successes.concat(response.data);
-            return successes;
-        }, function (err) {
+            return { successes:successes, errors:errors };
+        }, function (err, obj) {
             return
             err.indexOf('401') == -1 // problem with the credentials, check the options
             ||
@@ -192,7 +199,7 @@ var parallelGet = function (total, limit, objectName, finalCallback) {
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelGet = function (total, limit, objectName, finalCallback) {
+backandAsync.prototype.get = function (total, limit, objectName, finalCallback) {
     parallelGet(total, limit, objectName, finalCallback);
 };
 
@@ -200,7 +207,7 @@ backandAsync.prototype.parallelGet = function (total, limit, objectName, finalCa
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelGetAll = function (limit, objectName, finalCallback) {
+backandAsync.prototype.getAll = function (limit, objectName, finalCallback) {
     parallelGet(null, limit, objectName, finalCallback);
 };
 
@@ -235,7 +242,7 @@ var getBulkArray = function(array, method, bulkSize, url, buildUrl){
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelPostBulk = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.post = function (array, limit, objectName, finalCallback) {
     var bulkUrl = '/1/bulk';
     var postUrl = self.options.url + '/1/objects/' + objectName;
 
@@ -247,13 +254,16 @@ backandAsync.prototype.parallelPostBulk = function (array, limit, objectName, fi
 
     parallel(bulkArray, limit, function (obj) {
         return self.backand.post(bulkUrl, obj, false);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         for (var i = 0; i < response.length; i++) {
             if (response[i] != null && response[i].__metadata) {
                 successes.push(response[i].__metadata.id);
             }
+            else{
+                errors.push(response[i]);
+            }
         }
-        return successes;
+        return { successes:successes, errors:errors };
     }, function (err) {
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
@@ -266,7 +276,7 @@ backandAsync.prototype.parallelPostBulk = function (array, limit, objectName, fi
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelPutBulk = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.put = function (array, limit, objectName, finalCallback) {
     var bulkUrl = '/1/bulk';
     var postUrl = self.options.url + '/1/objects/' + objectName;
 
@@ -278,14 +288,17 @@ backandAsync.prototype.parallelPutBulk = function (array, limit, objectName, fin
 
     parallel(bulkArray, limit, function (obj) {
         return self.backand.post(bulkUrl, obj, false);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         for (var i = 0; i < obj.length; i++) {
             if (response[i] == null) {
                 successes.push(obj[i].data.__metadata.id);
             }
+            else{
+                errors.push(response[i]);
+            }
         }
-        return successes;
-    }, function (err) {
+        return { successes:successes, errors:errors };
+    }, function (err, obj) {
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
         ||
@@ -297,11 +310,11 @@ backandAsync.prototype.parallelPutBulk = function (array, limit, objectName, fin
 // limit: The maximum number of async operations at a time
 // objectName: The name of the object to post
 // finalCallback: Triggered at the end, with the arguments: err, data. If successful then err is null. The data contains all the successful actions responses
-backandAsync.prototype.parallelDeleteBulk = function (array, limit, objectName, finalCallback) {
+backandAsync.prototype.delete = function (array, limit, objectName, finalCallback) {
     var bulkUrl = '/1/bulk';
     var postUrl = self.options.url + '/1/objects/' + objectName;
 
-    var bulkSize = 1000;
+    var bulkSize = 10;
 
     var bulkArray = getBulkArray(array, methods.DELETE, bulkSize, postUrl, function (url, obj) {
         return url + "/" + obj.__metadata.id;
@@ -309,13 +322,16 @@ backandAsync.prototype.parallelDeleteBulk = function (array, limit, objectName, 
 
     parallel(bulkArray, limit, function (obj) {
         return self.backand.post(bulkUrl, obj, false);
-    }, function (response, obj, successes) {
+    }, function (response, obj, successes, errors) {
         for (var i = 0; i < obj.length; i++) {
             if (response[i] != null && response[i].__metadata) {
                 successes.push(response[i].__metadata.id);
             }
+            else{
+                errors.push(response[i]);
+            }
         }
-        return successes;
+        return { successes:successes, errors:errors };
     }, function (err) {
         return
         err.indexOf('401') == -1 // problem with the credentials, check the options
