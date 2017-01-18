@@ -10,7 +10,7 @@ var expect = chai.expect;
 var assert = chai.assert;
 
 // backand SDK
-var options =  require("./options-prod.json");
+var options =  require("./options.json");
 var BackandAsyncSdk = require("./backand-async");
 var backandAsync = new BackandAsyncSdk(options);
 
